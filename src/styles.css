@@ -358,3 +358,7 @@ select.compact { width: auto; padding: 6px 8px; font-size: 15px; }
 .note-box { margin: 8px 0 0; text-align: left; background: var(--bg); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
 details > summary { cursor: pointer; }
 details[open] > summary { margin-bottom: 10px; }
+
+.file-button { position: relative; overflow: hidden; }
+.file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.banner .button, .banner button { padding: 8px 12px; font-size: 14px; }

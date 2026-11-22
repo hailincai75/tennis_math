@@ -1,4 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useState } from 'react';
+import { backupReminder, loadPrefs, savePrefs, SNOOZE_MS } from './prefs';
 import { loadMatchSummaries, type MatchSummary } from './matchSummary';
 import { PLAYER_NAME, STATUS_LABEL, SURFACE_LABEL } from './labels';
 import { href } from './router';
@@ -33,6 +35,25 @@ function MatchRow({ s }: { s: MatchSummary }) {
   );
 }
 
+function BackupBanner({ summaries }: { summaries: MatchSummary[] }) {
+  const [prefs, setPrefs] = useState(loadPrefs);
+  const { due, pending } = backupReminder(summaries.map((s) => s.match), prefs, Date.now());
+  if (!due) return null;
+  return (
+    <div className="banner">
+      <span className="grow">
+        有 {pending} 场比赛还没备份。数据只存在这台手机上，建议导出一份。
+      </span>
+      <a className="button" href={href({ name: 'settings' })}>
+        去备份
+      </a>
+      <button className="secondary" onClick={() => setPrefs(savePrefs({ backupSnoozeUntil: Date.now() + SNOOZE_MS }))}>
+        稍后
+      </button>
+    </div>
+  );
+}
+
 export function Home() {
   const summaries = useLiveQuery(loadMatchSummaries, []);
 
@@ -41,6 +62,7 @@ export function Home() {
       <a className="button primary big" href={href({ name: 'new' })}>
         ＋ 新比赛
       </a>
+      {summaries && <BackupBanner summaries={summaries} />}
 
       {summaries === undefined ? null : summaries.length === 0 ? (
         <section className="card empty">

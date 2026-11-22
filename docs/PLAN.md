@@ -16,7 +16,7 @@
 - **Vite + React + TypeScript**：主框架，类型系统能防止统计口径出错
 - **vite-plugin-pwa**：生成 Service Worker 和 manifest，让 app 离线可用、可装到主屏
 - **Dexie.js**：封装 IndexedDB，负责本地存储和数据库版本迁移
-- **Recharts**：画趋势图、势头图
+- **自己写的 SVG 折线图**（`src/ui/LineChart.tsx`）：画趋势图、势头图。原计划用 Recharts，实际没有引入，减小体积
 - **Vitest**：给记分引擎和统计计算写单元测试（这是整个 app 最容易出错的部分）
 - 不用 UI 组件库，自己写 CSS，针对 iPhone 竖屏和大按钮优化
 
@@ -169,6 +169,8 @@ interface Point {
 7. **设置页**：默认赛制、默认记录模式、导出/导入备份（JSON 和 CSV）、存储状态
 
 ## 9. 开发里程碑
+
+> 状态（2026-11-22）：M0–M6 全部完成并已部署。之后根据实际使用慢慢优化。
 
 | 里程碑 | 内容 | 完成标准 |
 |---|---|---|

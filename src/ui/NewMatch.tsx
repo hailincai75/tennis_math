@@ -3,23 +3,26 @@ import { useState, type FormEvent } from 'react';
 import { repo } from '../db';
 import { FORMAT_PRESETS, type RecordingMode, type Side, type Surface } from '../domain/types';
 import { PLAYER_NAME, SURFACE_LABEL, todayLocal } from './labels';
+import { loadPrefs } from './prefs';
 import { href, navigate } from './router';
 
 const NEW_OPPONENT = '__new__';
 
 export function NewMatch() {
+  const [prefs] = useState(loadPrefs);
+  const initialPreset = FORMAT_PRESETS[prefs.defaultPreset] ? prefs.defaultPreset : 'bo3mtb';
   const opponents = useLiveQuery(() => repo.listOpponents(), []);
   const [opponentId, setOpponentId] = useState('');
   const [newName, setNewName] = useState('');
   const [hand, setHand] = useState<'' | 'R' | 'L'>('');
   const [date, setDate] = useState(todayLocal);
-  const [presetKey, setPresetKey] = useState('bo3mtb');
-  const [noAd, setNoAd] = useState(FORMAT_PRESETS.bo3mtb.format.noAd);
-  const [firstServer, setFirstServer] = useState<Side>('elsa');
+  const [presetKey, setPresetKey] = useState(initialPreset);
+  const [noAd, setNoAd] = useState(FORMAT_PRESETS[initialPreset].format.noAd);
+  const [firstServer, setFirstServer] = useState<Side>(prefs.defaultFirstServer);
   const [surface, setSurface] = useState<Surface | ''>('hard');
   const [event, setEvent] = useState('');
   const [round, setRound] = useState('');
-  const [mode, setMode] = useState<RecordingMode>('standard');
+  const [mode, setMode] = useState<RecordingMode>(prefs.defaultMode);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
