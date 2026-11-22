@@ -100,3 +100,75 @@ export function formatStat(v: StatValue, withCounts = true): string {
 export function statNumber(v: StatValue): number | null {
   return v.kind === 'count' ? v.n : pct(v.ratio);
 }
+
+// ---- English labels (for the shared image the coach reads) ----------------
+
+export const SECTION_EN: Record<string, string> = {
+  总体: 'Overall',
+  发球: 'Serve',
+  接发: 'Return',
+  每分结果: 'Point endings',
+  关键分: 'Pressure',
+  '回合长度（胜率）': 'Rally length (points won)',
+};
+
+export const LABEL_EN: Record<string, string> = {
+  pointsWon: 'Total points won',
+  firstServeIn: '1st serve in',
+  firstServeWon: '1st serve points won',
+  secondServeWon: '2nd serve points won',
+  servePointsWon: 'Service points won',
+  aces: 'Aces',
+  doubleFaults: 'Double faults',
+  serviceGamesHeld: 'Service games held',
+  breakPointsSaved: 'Break points saved',
+  returnPointsWon: 'Return points won',
+  firstReturnWon: 'Return pts won vs 1st serve',
+  secondReturnWon: 'Return pts won vs 2nd serve',
+  breakPointsConverted: 'Break points converted',
+  breaks: 'Return games won',
+  winners: 'Winners',
+  unforcedErrors: 'Unforced errors',
+  forcedErrors: 'Forced errors',
+  ueRate: 'Unforced errors % of points',
+  netWinners: 'Winners − unforced errors',
+  gamePointsConverted: 'Game points converted',
+  deucePointsWon: 'Deuce / deciding points won',
+  tiebreakPointsWon: 'Tiebreak points won',
+  longestStreak: 'Longest point streak',
+  rallyShort: 'Short rallies (1-4)',
+  rallyMedium: 'Medium rallies (5-8)',
+  rallyLong: 'Long rallies (9+)',
+};
+
+// ---- which rows have data, and who is better --------------------------------
+
+export interface VisibleRow {
+  row: StatRow;
+  elsa: StatValue;
+  opp: StatValue;
+  better: 'elsa' | 'opp' | null;
+}
+
+/** Sections and rows that have data for this match (empty sections dropped). */
+export function visibleSections(
+  stats: { elsa: SideStats; opp: SideStats; detailedPoints: number },
+): { title: string; rows: VisibleRow[] }[] {
+  return STAT_SECTIONS.map((sec) => ({
+    title: sec.title,
+    rows: sec.rows
+      .map((row) => ({ row, elsa: row.get(stats.elsa), opp: row.get(stats.opp) }))
+      .filter(({ row, elsa, opp }) =>
+        elsa.kind === 'count'
+          ? !row.needsDetail || stats.detailedPoints > 0
+          : elsa.ratio.den > 0 || (opp.kind === 'ratio' && opp.ratio.den > 0),
+      )
+      .map((v) => {
+        const en = statNumber(v.elsa);
+        const on = statNumber(v.opp);
+        const better =
+          en === null || on === null || en === on ? null : (en > on) === v.row.higherIsBetter ? 'elsa' : 'opp';
+        return { ...v, better } as VisibleRow;
+      }),
+  })).filter((s) => s.rows.length > 0);
+}

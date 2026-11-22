@@ -7,8 +7,9 @@ import { describePoint, PLAYER_NAME, STATUS_LABEL, SURFACE_LABEL, type Names } f
 import { LineChart, type ChartDatum } from './LineChart';
 import { loadMatchView } from './matchData';
 import { PointEditor } from './PointEditor';
+import { ShareSheet } from './ShareSheet';
 import { href } from './router';
-import { formatStat, STAT_SECTIONS, statNumber } from './statRows';
+import { formatStat, visibleSections } from './statRows';
 
 function StatTable({ stats, names }: { stats: Stats; names: Names }) {
   return (
@@ -21,36 +22,20 @@ function StatTable({ stats, names }: { stats: Stats; names: Names }) {
             <th className="opp">{names.opp}</th>
           </tr>
         </thead>
-        {STAT_SECTIONS.map((sec) => {
-          const rows = sec.rows
-            .map((row) => ({ row, e: row.get(stats.elsa), o: row.get(stats.opp) }))
-            .filter(({ row, e, o }) =>
-              e.kind === 'count'
-                ? !row.needsDetail || stats.detailedPoints > 0
-                : e.ratio.den > 0 || (o.kind === 'ratio' && o.ratio.den > 0),
-            );
-          if (!rows.length) return null;
-          return (
-            <tbody key={sec.title}>
-              <tr className="section">
-                <th colSpan={3}>{sec.title}</th>
+        {visibleSections(stats).map((sec) => (
+          <tbody key={sec.title}>
+            <tr className="section">
+              <th colSpan={3}>{sec.title}</th>
+            </tr>
+            {sec.rows.map(({ row, elsa, opp, better }) => (
+              <tr key={row.key}>
+                <th>{row.label}</th>
+                <td className={better === 'elsa' ? 'better' : ''}>{formatStat(elsa)}</td>
+                <td className={better === 'opp' ? 'better' : ''}>{formatStat(opp)}</td>
               </tr>
-              {rows.map(({ row, e, o }) => {
-                const en = statNumber(e);
-                const on = statNumber(o);
-                const better =
-                  en === null || on === null || en === on ? null : (en > on) === row.higherIsBetter ? 'elsa' : 'opp';
-                return (
-                  <tr key={row.key}>
-                    <th>{row.label}</th>
-                    <td className={better === 'elsa' ? 'better' : ''}>{formatStat(e)}</td>
-                    <td className={better === 'opp' ? 'better' : ''}>{formatStat(o)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          );
-        })}
+            ))}
+          </tbody>
+        ))}
       </table>
     </section>
   );
@@ -146,6 +131,7 @@ function PointList({ points, r, names, onEdit }: { points: Point[]; r: ReplayRes
 export function MatchStats({ id }: { id: string }) {
   const loaded = useLiveQuery(() => loadMatchView(id), [id]);
   const [editing, setEditing] = useState<Point | null>(null);
+  const [sharing, setSharing] = useState(false);
   const stats = useMemo(
     () => (loaded?.kind === 'ok' ? computeMatchStats(loaded.data.points, loaded.data.replay) : null),
     [loaded],
@@ -167,6 +153,7 @@ export function MatchStats({ id }: { id: string }) {
 
   const { match: m, points, replay: r } = loaded.data;
   const names: Names = { elsa: PLAYER_NAME, opp: loaded.opponent?.name ?? '对手' };
+  const namesEn: Names = { elsa: PLAYER_NAME, opp: loaded.opponent?.name ?? 'Opponent' };
   const result =
     m.status === 'completed'
       ? `${names[r.final.winner!]} 获胜`
@@ -182,7 +169,14 @@ export function MatchStats({ id }: { id: string }) {
         <span className="live-title">
           {names.elsa} vs {names.opp}
         </span>
-        <a href={href({ name: 'match', id: m.id })}>{m.status === 'in_progress' ? '记分' : '比分牌'}</a>
+        <span className="head-actions">
+          {points.length > 0 && (
+            <button className="link small-link" onClick={() => setSharing(true)}>
+              分享
+            </button>
+          )}
+          <a href={href({ name: 'match', id: m.id })}>{m.status === 'in_progress' ? '记分' : '比分牌'}</a>
+        </span>
       </header>
       <main>
         <section className="card summary">
@@ -204,6 +198,10 @@ export function MatchStats({ id }: { id: string }) {
           </>
         )}
       </main>
+
+      {sharing && (
+        <ShareSheet match={m} replay={r} stats={stats} names={namesEn} onClose={() => setSharing(false)} />
+      )}
 
       {editing && (
         <PointEditor

@@ -362,3 +362,7 @@ details[open] > summary { margin-bottom: 10px; }
 .file-button { position: relative; overflow: hidden; }
 .file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .banner .button, .banner button { padding: 8px 12px; font-size: 14px; }
+
+.share-preview { width: 100%; max-height: 55dvh; object-fit: contain; object-position: top; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+button.small-link { font-size: 15px; color: #fff; padding: 4px 8px; }
+.head-actions { gap: 8px; }
