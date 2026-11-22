@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { isStandalone } from './platform';
+import { Analysis } from './ui/Analysis';
 import { Home } from './ui/Home';
 import { LiveMatch } from './ui/LiveMatch';
 import { MatchStats } from './ui/MatchStats';
 import { NewMatch } from './ui/NewMatch';
-import { useRoute } from './ui/router';
+import { OpponentDetail, Opponents } from './ui/Opponents';
+import { useRoute, type Route } from './ui/router';
+import { Settings } from './ui/Settings';
+import { TabBar } from './ui/TabBar';
 
 function useOnline() {
   const [online, setOnline] = useState(navigator.onLine);
@@ -22,6 +26,15 @@ function useOnline() {
   return online;
 }
 
+const TITLES: Partial<Record<Route['name'], string>> = {
+  home: 'Tennis Math',
+  new: '新比赛',
+  analysis: '分析',
+  opponents: '对手',
+  opponent: '对手',
+  settings: '设置',
+};
+
 export default function App() {
   const route = useRoute();
   const online = useOnline();
@@ -31,7 +44,7 @@ export default function App() {
     updateServiceWorker,
   } = useRegisterSW();
 
-  // The scoring and stats pages have their own compact header.
+  // The scoring and stats pages have their own compact header and no tab bar.
   if (route.name === 'match' || route.name === 'stats') {
     return (
       <div className="app">
@@ -40,10 +53,31 @@ export default function App() {
     );
   }
 
+  let page;
+  switch (route.name) {
+    case 'new':
+      page = <NewMatch />;
+      break;
+    case 'analysis':
+      page = <Analysis />;
+      break;
+    case 'opponents':
+      page = <Opponents />;
+      break;
+    case 'opponent':
+      page = <OpponentDetail id={route.id} />;
+      break;
+    case 'settings':
+      page = <Settings offlineReady={offlineReady} />;
+      break;
+    default:
+      page = <Home />;
+  }
+
   return (
-    <div className="app">
+    <div className={`app${route.name === 'new' ? '' : ' with-tabs'}`}>
       <header className="topbar">
-        <h1>{route.name === 'new' ? '新比赛' : 'Tennis Math'}</h1>
+        <h1>{TITLES[route.name]}</h1>
         <span className={online ? 'pill ok' : 'pill warn'}>{online ? '在线' : '离线'}</span>
       </header>
 
@@ -62,7 +96,8 @@ export default function App() {
         </div>
       )}
 
-      {route.name === 'new' ? <NewMatch /> : <Home offlineReady={offlineReady} />}
+      {page}
+      {route.name !== 'new' && <TabBar current={route.name} />}
     </div>
   );
 }

@@ -75,7 +75,7 @@ export interface MatchStats {
   momentum: MomentumPoint[];
 }
 
-function emptySide(): SideStats {
+export function emptySide(): SideStats {
   return {
     pointsWon: r(),
     servePointsWon: r(),

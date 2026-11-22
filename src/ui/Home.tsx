@@ -2,7 +2,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { loadMatchSummaries, type MatchSummary } from './matchSummary';
 import { PLAYER_NAME, STATUS_LABEL, SURFACE_LABEL } from './labels';
 import { href } from './router';
-import { StatusCard } from './StatusCard';
 
 function MatchRow({ s }: { s: MatchSummary }) {
   const { match } = s;
@@ -34,7 +33,7 @@ function MatchRow({ s }: { s: MatchSummary }) {
   );
 }
 
-export function Home({ offlineReady }: { offlineReady: boolean }) {
+export function Home() {
   const summaries = useLiveQuery(loadMatchSummaries, []);
 
   return (
@@ -57,7 +56,6 @@ export function Home({ offlineReady }: { offlineReady: boolean }) {
         </ul>
       )}
 
-      <StatusCard offlineReady={offlineReady} />
     </main>
   );
 }
