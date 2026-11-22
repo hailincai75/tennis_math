@@ -14,7 +14,7 @@ function MatchRow({ s }: { s: MatchSummary }) {
     .join(' · ');
   return (
     <li>
-      <a className={`match-row${live ? ' ongoing' : ''}`} href={href({ name: 'match', id: match.id })}>
+      <a className={`match-row${live ? ' ongoing' : ''}`} href={href({ name: live ? 'match' : 'stats', id: match.id })}>
         <div className="match-main">
           <div className="match-title">
             {PLAYER_NAME} vs {s.opponent?.name ?? '（对手已删除）'}

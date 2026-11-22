@@ -1,35 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { repo, type LoadedMatch } from '../db';
+import { useEffect, useRef, useState } from 'react';
+import { repo } from '../db';
 import type { PointContext, ReplayResult } from '../domain/scoring';
 import { formatSetScores } from '../domain/scoring';
-import type { Match, Opponent, Point, PointDetails, RallyLength, Side } from '../domain/types';
+import type { Match, PointDetails, RallyLength, Side } from '../domain/types';
 import { describePoint, PLAYER_NAME, situationLabel, type Names } from './labels';
+import { detailsOf, loadMatchView } from './matchData';
 import { backInput, START, stepInput, type InputAction, type InputState, type RallyEnding } from './pointInput';
 import { href, navigate } from './router';
+import { Sheet } from './Sheet';
 import { useWakeLock } from './useWakeLock';
-
-type Loaded =
-  | { kind: 'missing' }
-  | { kind: 'error'; message: string }
-  | { kind: 'ok'; data: LoadedMatch; opponent?: Opponent };
-
-async function load(id: string): Promise<Loaded> {
-  const match = await repo.getMatch(id);
-  if (!match) return { kind: 'missing' };
-  try {
-    const [data, opponent] = await Promise.all([repo.loadMatch(id), repo.getOpponent(match.opponentId)]);
-    return { kind: 'ok', data, opponent };
-  } catch (e) {
-    return { kind: 'error', message: e instanceof Error ? e.message : String(e) };
-  }
-}
-
-/** The details originally entered for a point, so it can be re-saved with changes. */
-function detailsOf(p: Point): PointDetails {
-  const { winner, firstServeIn, ending, endedBy, rallyLength, stroke, note } = p;
-  return ending ? { firstServeIn, ending, endedBy, rallyLength, stroke, note } : { winner, firstServeIn, rallyLength, stroke, note };
-}
 
 // ---------------------------------------------------------------------------
 
@@ -160,21 +140,10 @@ function InputPanel({ ctx, names, mode, input, rally, onRally, onAction, onQuick
 
 // ---------------------------------------------------------------------------
 
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return (
-    <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
-        <h3>{title}</h3>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 
 export function LiveMatch({ id }: { id: string }) {
-  const loaded = useLiveQuery(() => load(id), [id]);
+  const loaded = useLiveQuery(() => loadMatchView(id), [id]);
   const [input, setInput] = useState<InputState>(START);
   const [rally, setRally] = useState<RallyLength | null>(null);
   const [toast, setToast] = useState('');
@@ -303,9 +272,12 @@ export function LiveMatch({ id }: { id: string }) {
         <span className="live-title">
           {names.elsa} vs {names.opp}
         </span>
-        <button className="link" onClick={() => setSheet('menu')} aria-label="菜单">
-          ⋯
-        </button>
+        <span className="head-actions">
+          <a href={href({ name: 'stats', id: m.id })}>统计</a>
+          <button className="link" onClick={() => setSheet('menu')} aria-label="菜单">
+            ⋯
+          </button>
+        </span>
       </header>
 
       <Scoreboard r={r} names={names} />
@@ -329,7 +301,10 @@ export function LiveMatch({ id }: { id: string }) {
               </button>
             </>
           )}
-          <p className="muted">共 {data.points.length} 分。详细统计将在 M4 加入。</p>
+          <a className="button primary" href={href({ name: 'stats', id: m.id })}>
+            查看统计
+          </a>
+          <p className="muted">共 {data.points.length} 分</p>
         </div>
       ) : (
         r.next && (

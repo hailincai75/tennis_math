@@ -3,6 +3,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { isStandalone } from './platform';
 import { Home } from './ui/Home';
 import { LiveMatch } from './ui/LiveMatch';
+import { MatchStats } from './ui/MatchStats';
 import { NewMatch } from './ui/NewMatch';
 import { useRoute } from './ui/router';
 
@@ -30,11 +31,11 @@ export default function App() {
     updateServiceWorker,
   } = useRegisterSW();
 
-  // The scoring page has its own compact header.
-  if (route.name === 'match') {
+  // The scoring and stats pages have their own compact header.
+  if (route.name === 'match' || route.name === 'stats') {
     return (
       <div className="app">
-        <LiveMatch id={route.id} />
+        {route.name === 'match' ? <LiveMatch id={route.id} /> : <MatchStats id={route.id} />}
       </div>
     );
   }
